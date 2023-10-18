@@ -61,21 +61,20 @@ func (d *Display) Draw(screen *ebiten.Image, dm *DrumMachine) {
 	screen.DrawImage(d.backgroundImg, nil)
 
 	// draw the current name of the pattern
-	text.Draw(screen, dm._current_pattern.Name, d.regularFont, 10, 180, color.White)
+	text.Draw(screen, dm.currentPattern.Name, d.regularFont, 10, 180, color.White)
 
 	// draw the current index of the pattern
-	text.Draw(screen, fmt.Sprint(dm.Current_pattern_idx), d.bigFont, 38, 60, color.Black)
+	text.Draw(screen, fmt.Sprint(dm.CurrentPatternIndex), d.bigFont, 38, 60, color.Black)
 
 	// draw the current tempo
 	text.Draw(screen, fmt.Sprint(dm.Tempo), d.bigFont, 177, 40, color.White)
 
 	// draw the beat-indicating dot
 	if dm.Beat%4 == 0 && dm.State == "playing" {
-		//	pygame.draw.circle(self.screen, "yellow", (self.SCREEN_WIDTH/2, 40), 4)
 		vector.DrawFilledCircle(screen, 120, 40, 4, color.White, true)
 	}
 	// draw the beat tracker
-	for i := 0; i < dm.Pattern_length; i++ {
+	for i := 0; i < dm.PatternLength; i++ {
 		const (
 			bar_width      = 10.0
 			bar_height     = 18.0

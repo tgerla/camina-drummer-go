@@ -27,16 +27,16 @@ func (g *Game) Update() error {
 		}
 	case inpututil.IsKeyJustPressed(ebiten.KeyLeft):
 		{
-			if g.drumMachine.Current_pattern_idx > 1 {
-				g.drumMachine.SwitchPattern(g.drumMachine.Current_pattern_idx - 1)
+			if g.drumMachine.CurrentPatternIndex > 1 {
+				g.drumMachine.SwitchPattern(g.drumMachine.CurrentPatternIndex - 1)
 			} else {
 				g.drumMachine.SwitchPattern(len(g.drumMachine.Patterns))
 			}
 		}
 	case inpututil.IsKeyJustPressed(ebiten.KeyRight):
 		{
-			if g.drumMachine.Current_pattern_idx < len(g.drumMachine.Patterns) {
-				g.drumMachine.SwitchPattern(g.drumMachine.Current_pattern_idx + 1)
+			if g.drumMachine.CurrentPatternIndex < len(g.drumMachine.Patterns) {
+				g.drumMachine.SwitchPattern(g.drumMachine.CurrentPatternIndex + 1)
 			} else {
 				g.drumMachine.SwitchPattern(1)
 			}

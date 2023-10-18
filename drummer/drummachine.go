@@ -15,44 +15,44 @@ const (
 )
 
 type DrumMachine struct {
-	State                 string
-	Current_pattern_idx   int
-	Pattern_length        int
-	Current_measure       string
-	Tempo                 int
-	Measure_changing      bool
-	Beat                  int
-	Interval              int64
-	Patterns              map[string]Pattern
-	_sounds               map[string]*audio.Player
-	_time_since_last_beat time.Duration
-	_current_pattern      Pattern
-	_playing_pattern      Pattern
-	_prior_measure        string
-	last_taps             []int
-	_last_time            time.Time
+	State               string
+	CurrentPatternIndex int
+	PatternLength       int
+	CurrentMeasure      string
+	Tempo               int
+	MeasureChanging     bool
+	Beat                int
+	Interval            int64
+	Patterns            map[string]Pattern
+	sounds              map[string]*audio.Player
+	timeSinceLastBeat   time.Duration
+	currentPattern      Pattern
+	playingPattern      Pattern
+	priorMeasure        string
+	lastTaps            []int
+	lastTime            time.Time
 
 	audioContext *audio.Context
 }
 
 func NewDrumMachine() *DrumMachine {
 	dm := &DrumMachine{
-		State:                 "stopped",
-		Current_pattern_idx:   1,
-		Pattern_length:        16,
-		Current_measure:       "A",
-		Tempo:                 120,
-		Measure_changing:      false,
-		Beat:                  0,
-		Interval:              0,
-		_time_since_last_beat: 0,
-		_prior_measure:        "A",
-		last_taps:             []int{},
+		State:               "stopped",
+		CurrentPatternIndex: 1,
+		PatternLength:       16,
+		CurrentMeasure:      "A",
+		Tempo:               120,
+		MeasureChanging:     false,
+		Beat:                0,
+		Interval:            0,
+		timeSinceLastBeat:   0,
+		priorMeasure:        "A",
+		lastTaps:            []int{},
 	}
 
 	dm.audioContext = audio.NewContext(sampleRate)
 
-	dm._sounds = make(map[string]*audio.Player)
+	dm.sounds = make(map[string]*audio.Player)
 	for sound := range SOUNDS {
 		f, err := os.Open("kits/1/" + SOUNDS[sound])
 		if err != nil {
@@ -64,7 +64,7 @@ func NewDrumMachine() *DrumMachine {
 			log.Fatal(err)
 		}
 
-		dm._sounds[sound], err = dm.audioContext.NewPlayer(s)
+		dm.sounds[sound], err = dm.audioContext.NewPlayer(s)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -73,7 +73,7 @@ func NewDrumMachine() *DrumMachine {
 	pl := NewPatternLoader()
 	dm.Patterns, _ = pl.LoadPatterns()
 
-	dm.SwitchPattern(dm.Current_pattern_idx)
+	dm.SwitchPattern(dm.CurrentPatternIndex)
 	dm.SetTempo(dm.Tempo)
 
 	return dm
@@ -81,8 +81,8 @@ func NewDrumMachine() *DrumMachine {
 
 func (dm *DrumMachine) Play() {
 	dm.State = "playing"
-	dm._time_since_last_beat = 0
-	dm._playing_pattern = dm._current_pattern
+	dm.timeSinceLastBeat = 0
+	dm.playingPattern = dm.currentPattern
 }
 
 func (dm *DrumMachine) Stop() {
@@ -91,38 +91,38 @@ func (dm *DrumMachine) Stop() {
 
 func (dm *DrumMachine) play_beat() {
 	dm.Beat += 1
-	if dm.Beat == dm.Pattern_length {
+	if dm.Beat == dm.PatternLength {
 		dm.Beat = 0
 
-		dm._playing_pattern = dm._current_pattern
+		dm.playingPattern = dm.currentPattern
 
-		if dm.Current_measure == "T" {
-			dm.Current_measure = dm._prior_measure
-			dm.Measure_changing = true
+		if dm.CurrentMeasure == "T" {
+			dm.CurrentMeasure = dm.priorMeasure
+			dm.MeasureChanging = true
 		} else {
-			dm.Measure_changing = false
+			dm.MeasureChanging = false
 		}
 	}
 
-	drums := dm._playing_pattern.Measures[dm.Current_measure]
+	drums := dm.playingPattern.Measures[dm.CurrentMeasure]
 	for drum := range drums {
 		drumIdx := dm.Beat % len(drums[drum])
 		if string(drums[drum][drumIdx]) == string('X') {
-			dm._sounds[drum].Rewind()
-			dm._sounds[drum].Play()
+			dm.sounds[drum].Rewind()
+			dm.sounds[drum].Play()
 		}
 	}
 }
 
 func (dm *DrumMachine) Tick() {
-	deltaTime := time.Since(dm._last_time)
+	deltaTime := time.Since(dm.lastTime)
 	//	log.Println(deltaTime, dm.Interval)
-	dm._last_time = time.Now()
+	dm.lastTime = time.Now()
 
 	if dm.State == "playing" {
-		dm._time_since_last_beat += time.Duration(deltaTime)
-		if dm._time_since_last_beat.Milliseconds() >= int64(dm.Interval) {
-			dm._time_since_last_beat = 0
+		dm.timeSinceLastBeat += time.Duration(deltaTime)
+		if dm.timeSinceLastBeat.Milliseconds() >= int64(dm.Interval) {
+			dm.timeSinceLastBeat = 0
 			dm.play_beat()
 		}
 	}
@@ -138,10 +138,10 @@ func (dm *DrumMachine) SetTempo(tempo int) {
 }
 
 func (dm *DrumMachine) SwitchPattern(new_pattern_idx int) {
-	dm.Current_pattern_idx = new_pattern_idx
-	dm._current_pattern = dm.Patterns[fmt.Sprint(new_pattern_idx)]
-	log.Println("current pattern", dm._current_pattern)
-	dm.Current_measure = "A"
-	dm._playing_pattern = dm._current_pattern
-	dm.Pattern_length = dm._current_pattern.Length
+	dm.CurrentPatternIndex = new_pattern_idx
+	dm.currentPattern = dm.Patterns[fmt.Sprint(new_pattern_idx)]
+	log.Println("current pattern", dm.currentPattern)
+	dm.CurrentMeasure = "A"
+	dm.playingPattern = dm.currentPattern
+	dm.PatternLength = dm.currentPattern.Length
 }
